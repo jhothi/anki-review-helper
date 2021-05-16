@@ -1,45 +1,44 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import {getCards} from './anki'
 
 function App() {
 
+  // Setup the initial list of cards in the deck.
   const [cards, setCards] = useState([]);
   useEffect(() => {
     getCards()
-    .then((resp) => setCards(resp.result.map((card) => transformToCard(card))))
+      .then((resp) => setCards(resp.result.map((card) => transformToCard(card))));
   }, []);
 
-  const [currentCard, setCurrentCard] = useState({});
+  // Move through list over time.
+  const [index, setIndex] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentCard(cards[Math.floor(Math.random() * cards.length)])
+      setIndex((prev) => (prev + 1) % cards.length)
+      console.log(index);
     }, 10000);
     return () => clearInterval(interval);
-  })
+  });
 
-  async function getCards() {
-    const foundCards = await fetch("http://127.0.0.1:8765", {
-      method: 'POST',
-      headers: {
-       // 'Accept': "*/*",
-        //'Access-Control-Allow-Origin' : "*",
-        'Content-Type' : 'application/json'
-      },
-      //mode: 'no-cors',
-      body: JSON.stringify({"action": "findCards", "version": 6, "params": {"query":'-is:new (deck:"Core 2000" or deck:"All in One Kanji")'}})
+  // Allow option to randomize deck.
+  useEffect(() => {
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "KeyS") {
+        setCards((prev) => shuffleDeck(prev.slice(0)));
+        setIndex(0);
+      }
     });
-    const jsonCards = await foundCards.json();
-    const allCards = await fetch("http://127.0.0.1:8765", {
-      method: 'POST',
-      headers: {
-       // 'Accept': "*/*",
-        //'Access-Control-Allow-Origin' : "*",
-        'Content-Type' : 'application/json'
-      },
-      //mode: 'no-cors',
-      body: JSON.stringify({"action": "cardsInfo", "version": 6, "params": {"cards": jsonCards.result}})
-    });
-    return allCards.json();
+    return () => window.removeEventListener("keydown", (event) => null);
+  });
+  function shuffleDeck(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+    }
+    return array;
   }
 
   function transformToCard(card) {
@@ -57,15 +56,20 @@ function App() {
       }
     }
   }
-  
 
-  return (
-    <div className="App">
-      <p className="main">{currentCard.main}</p>
-      <p className="sub">{currentCard.sub1}</p>
-      <p className="sub">{currentCard.sub2}</p>
-    </div>
-  );
+
+  if (cards.length > 0) {
+    return (
+      <div className="App">
+        <p className="main">{cards[index].main}</p>
+        <p className="sub">{cards[index].sub1}</p>
+        <p className="sub">{cards[index].sub2}</p>
+      </div>
+    )
+  }
+  else {
+    return <div className="App">Loading...</div>
+  }
 }
 
 export default App;
