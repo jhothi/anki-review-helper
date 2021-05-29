@@ -21,5 +21,6 @@ export async function getCards() {
         //mode: 'no-cors',
         body: JSON.stringify({ "action": "cardsInfo", "version": 6, "params": { "cards": jsonCards.result } })
     });
-    return allCards.json();
+    const response = await allCards.json();
+    return response.result;
 }
