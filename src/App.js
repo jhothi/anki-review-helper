@@ -56,7 +56,7 @@ function App() {
     }
     document.addEventListener("keydown", onKeyPress);
     return () => window.removeEventListener("keydown", onKeyPress);
-  });
+  }, []);
 
   // Render
   if (cards.length > 0) {
